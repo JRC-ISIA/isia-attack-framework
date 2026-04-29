@@ -16,7 +16,7 @@ This framework is used to execute attacks in an OT environment, capture the resu
 
 #### Component Diagram
 
-<img src="documentation/ComponentDiagram_AttackFramework.png" alt="Component Diagram" width="500">
+<img src="documentation/ComponentDiagram_AttackFramework.png" alt="Component Diagram" width="800">
 
 ## Deployment
 
@@ -94,7 +94,7 @@ By default, the framework uses multicast communication over `239.255.76.67:7667`
 
 The diagram below shows which modules communicate via which channels.
 
-<img src="documentation/lcm-channels.drawio.png" alt="LCM-Channel Diagram" width="500">
+<img src="documentation/lcm-channels.drawio.png" alt="LCM-Channel Diagram" width="800">
 
 ## Current State
 
