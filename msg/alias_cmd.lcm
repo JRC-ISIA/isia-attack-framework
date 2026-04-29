@@ -1,0 +1,7 @@
+package exlcm;
+
+struct alias_cmd_t {
+    string ip;              // "123.08.15.00
+    string alias;           // "attack_agent01"
+    int64_t timestamp;      // ms since epoch
+}

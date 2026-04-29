@@ -1,0 +1,144 @@
+{
+  "version": "1.0",
+  "name": "example",
+  "description": "",
+  "timezone": "Europe/Vienna",
+  "tasks": [
+    {
+      "id": "1",
+      "type": "set_alias",
+      "targets": [],
+      "time": "",
+      "params": {
+        "iface": "172.17.22.51",
+        "alias": "attack-client01"
+      }
+    },
+    {
+      "id": "1",
+      "type": "execute_local",
+      "targets": [],
+      "time": "2026-03-24T16:50:00+01:00",
+      "blocking": "False",
+      "params": {
+        "interpreter": "/bin/bash",
+        "cmd": [
+          "start-profiler.sh plc-1.isia plc-2.isia plc-4.isia"
+        ]
+      }
+    },
+    {
+      "id": "2",
+      "type": "start_capture",
+      "targets": [],
+      "time": "",
+      "blocking": "false",
+      "params": {
+        "iface": "Ethernet",
+        "bpf": "not (udp and (dst host 239.255.76.67 or src host 239.255.76.67) and port 7667)"
+      }
+    },
+    {
+      "id": "3",
+      "type": "start_attack",
+      "targets": [
+        "attack-client01"
+      ],
+      "time": "10 sec",
+      "blocking": "true",
+      "params": {
+        "interpreter": "/bin/bash",
+        "script": "01-discover-opcua-ports.sh"
+      }
+    },
+    {
+      "id": "4",
+      "type": "start_attack",
+      "targets": [
+        "attack-client01"
+      ],
+      "time": "10 sec",
+      "blocking": "true",
+      "params": {
+        "interpreter": "python3",
+        "script": "02-dump-opcua.py"
+      }
+    },
+    {
+      "id": "5",
+      "type": "start_attack",
+      "targets": [
+        "attack-client01"
+      ],
+      "time": "10 sec",
+      "blocking": "true",
+      "params": {
+        "interpreter": "/bin/bash",
+        "script": "03-identify-opcua-imm.sh"
+      }
+    },
+    {
+      "id": "6",
+      "type": "start_attack",
+      "targets": [
+        "attack-client01"
+      ],
+      "time": "10 sec",
+      "blocking": "true",
+      "params": {
+        "interpreter": "/bin/bash",
+        "script": "04-chunk-flood-imm.sh"
+      }
+    },
+    {
+      "id": "7",
+      "type": "stop_capture",
+      "targets": [],
+      "time": "10 sec",
+      "blocking": 1,
+      "params": {}
+    },
+    {
+      "id": "8",
+      "type": "execute_local",
+      "targets": [],
+      "time": "",
+      "blocking": "True",
+      "params": {
+        "interpreter": "/bin/bash",
+        "cmd": [
+          "stop-profiler.sh plc-1.isia plc-2.isia plc-4.isia"
+        ]
+      }
+    },
+    {
+      "id": "9",
+      "type": "execute_local",
+      "targets": [],
+      "time": "1min",
+      "blocking": "False",
+      "params": {
+        "interpreter": "/bin/bash",
+        "cmd": [
+          "download-profiles.sh plc-1.isia plc-2.isia plc-4.isia"
+        ]
+      }
+    },
+    {
+      "id": "10",
+      "type": "extract_features",
+      "targets": [],
+      "time": "",
+      "blocking": "true",
+      "params": {}
+    },
+    {
+      "id": "11",
+      "type": "storage_transfer",
+      "targets": [],
+      "time": "",
+      "blocking": "true",
+      "params": {}
+    }
+  ]
+}

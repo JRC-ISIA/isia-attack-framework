@@ -1,0 +1,11 @@
+package exlcm;
+
+struct attack_cmd_t {
+    string command;         // "start_attack", "stop_attack"
+    string payload_json;    // optional: JSON (Attackdef, Params)
+    int64_t timestamp;      // ms since epoch
+    
+    string script_inline;    // optional: small script_inline
+    string script_filename;  // optional: script filename
+    string script_id;        // optional: id in case of chunks
+}

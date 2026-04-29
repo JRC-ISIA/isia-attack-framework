@@ -1,0 +1,10 @@
+package exlcm;
+
+struct task_status_t {
+	string task_type;
+	string module;
+	string state;
+	string target;
+	string info;
+	int64_t timestamp;
+}

@@ -1,0 +1,8 @@
+package exlcm;
+
+struct log_t {
+    string module;          // "capture", "attack", "coordinator"
+    string level;           // "INFO","WARN","ERROR" etc.
+    string text;
+    int64_t timestamp;
+}

@@ -1,0 +1,7 @@
+package exlcm;
+
+struct extract_cmd_t {
+    string command;     // "extract"
+    string file;       // optional
+    int64_t timestamp;
+}

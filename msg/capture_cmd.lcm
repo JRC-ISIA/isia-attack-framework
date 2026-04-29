@@ -1,0 +1,9 @@
+package exlcm;
+
+struct capture_cmd_t {
+    string command;     // "start_capture", "stop_capture"
+    string iface;       // optional: "eth0", "wlan0"
+    int64_t timestamp;
+    
+    string bpf;         // optional: BPF filter to use  
+}

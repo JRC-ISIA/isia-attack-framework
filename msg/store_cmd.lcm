@@ -1,0 +1,6 @@
+package exlcm;
+
+struct store_cmd_t {
+    string command;     // "store"
+    int64_t timestamp;
+}

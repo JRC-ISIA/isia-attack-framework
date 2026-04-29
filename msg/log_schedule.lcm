@@ -1,0 +1,7 @@
+package exlcm;
+
+struct log_schedule {
+    int32_t hour;
+    int32_t minute;
+    int32_t interval_hours;
+}
