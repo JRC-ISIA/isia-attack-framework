@@ -20,30 +20,50 @@ export DEVICE_ID="${DEVICE_ID:-coord-pi01}"
 
 mkdir -p run logs
 
+MODULES=("logger" "feature_extractor" "storage_transfer")
 
-if [ -f requirements.txt ]; then
-        pip install -r requirements.txt > /dev/null 2>&1
-fi
+stop_module() {
+    local name="$1"
+    local pid_file="run/${name}.pid"
+    if [[ -f "$pid_file" ]]; then
+        local old_pid
+        old_pid=$(cat "$pid_file")
+        if [[ -n "${old_pid}" ]] && kill -0 "${old_pid}" 2>/dev/null; then
+            kill "${old_pid}" 2>/dev/null || true
+        fi
+        rm -f "$pid_file"
+    fi
+}
 
-if [[ -f run/logger.pid ]]; then
-	old_pid="$(cat run/logger.pid || true)"
-	if [[ -n "${old_pid}" ]] && kill -0 "${old_pid}" 2>/dev/null; then
-		kill "${old_pid}" 2>/dev/null || true
+start_module() {
+    local name="$1"
+    local script="${name}.py"
+    local pid_file="run/${name}.pid"
+    local log_file="logs/${name}.out"
 
-	fi
-	rm -f run/logger.pid
-fi
+    stop_module "$name" # Clean up existing instance if any
 
-cleanup(){
-	if [[ -f run/logger.pid ]]; then
-		kill "$(cat run/logger.pid)" 2>/dev/null || true
-		rm -f run/logger.pid
-	fi
+    nohup env PYTHONUNBUFFERED=1 python3 -u "$script" >> "$log_file" 2>&1 &
+    echo $! > "$pid_file"
+    log_entry "${name^}" "INFO" "$script started (pid $(cat $pid_file))" | tee -a "$log_file" >> logs/coordinator.out
+}
+
+cleanup() {
+    log_entry "Coordinator" "INFO" "Cleaning up background modules..."
+    for mod in "${MODULES[@]}"; do
+        stop_module "$mod"
+    done
 }
 trap cleanup EXIT
 
-nohup env PYTHONUNBUFFERD=1 python3 -u logger.py >> logs/logger.out 2>&1 &
-echo $! > run/logger.pid
-log_entry "Logger" "INFO" "logger.py started (pid $(cat run/logger.pid))" | tee >> logs/logger.out 
-log_entry "Coordinator" "INFO" "coordinator.py starting with LCM_URI=${LCM_URI}" | tee >> logs/logger.out
+if [ -f requirements.txt ]; then
+    pip install -r requirements.txt > /dev/null 2>&1
+fi
+
+for mod in "${MODULES[@]}"; do
+    start_module "$mod"
+done
+
+log_entry "Coordinator" "INFO" "coordinator.py starting with LCM_URI=${LCM_URI}" | tee -a logs/coordinator.out
+
 python3 coordinator.py
