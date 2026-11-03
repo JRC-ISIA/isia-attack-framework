@@ -27,6 +27,10 @@ def event_listener():
         print(entry)
         with LOG_LOCK:
             LOG_LIST.append(entry)
+            # CHANGED: write immediately to disk so feature_extractor can read current logs
+            os.makedirs(OUT_DIR, exist_ok=True)
+            with open(os.path.join(OUT_DIR, "logger.out"), "a", encoding="utf-8") as f:
+                f.write(entry + "\n")
     
     def on_log_schedule(channel, data):
         msg = log_schedule.decode(data)

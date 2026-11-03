@@ -2,6 +2,7 @@
 
 import os, pandas as pd
 import shutil
+import re
 from helper_functions import report_event, request_ntp, get_lc, publish_task_status
 from exlcm.extract_cmd_t import extract_cmd_t
 from scapy.all import PcapReader, IP, IPv6, TCP, UDP, ICMP
@@ -14,7 +15,7 @@ from datetime import datetime, timezone
 @dataclass
 class net_features:
     # basic features
-    under_attack: bool
+    label: str
     ts:float
     src_ip:str
     dest_ip:str
@@ -94,7 +95,9 @@ ATTACK_WINDOWS = []
 ATTACK_START_TIME = None
 ATTACK_STOP_TIME = None
 
-def label_dataset(first_ts: float, last_ts: float) -> bool:
+ATTACKER_IPS = set()
+
+def label_dataset(first_ts: float, last_ts: float, src_ip: str) -> str:
     """labels dataset based on logs 'attack start' and 'attack stop' entries and adds label column to dataset"""
 #     # TODO: improve to label multiple attacks in one dataset and/or label based on more fine grained log entries (e.g. for each attack step)
 #     if ATTACK_START_TIME is None or ATTACK_STOP_TIME is None:
@@ -105,13 +108,19 @@ def label_dataset(first_ts: float, last_ts: float) -> bool:
 #         return True
 #     return False
     if not ATTACK_WINDOWS:
-        return False
-    for start, stop in ATTACK_WINDOWS:
+        return "normal"
+    for start, stop, attack_name in ATTACK_WINDOWS:
         if first_ts <= start and last_ts >= stop:
-            return True
+            if src_ip in ATTACKER_IPS:
+                return attack_name
+            else:
+                return "system_reaction"
         elif (start <= first_ts <= stop) or (start <= last_ts <= stop):
-            return True
-    return False
+            if src_ip in ATTACKER_IPS:
+                return attack_name
+            else:
+                return "system_reaction"
+    return "normal"
 
 def check_bad_checksum(pkt):
     if IP in pkt:
@@ -157,9 +166,9 @@ def extract_features(pcap:str):
         first_ts = float(packets[0].time)
         last_ts = float(packets[-1].time)
         duration = last_ts - first_ts
-        under_attack = label_dataset(first_ts, last_ts)
+        label = label_dataset(first_ts, last_ts, flow_key[0])
         features = net_features(
-            under_attack=under_attack,
+            label=label,
             ts=first_ts,
             src_ip=flow_key[0],
             dest_ip=flow_key[1],
@@ -284,11 +293,26 @@ def set_attack_times(range_start:float | None = None, range_end:float | None = N
     #                 dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
     #                 ATTACK_STOP_TIME = dt.timestamp()
     global ATTACK_WINDOWS
+    global ATTACKER_IPS
     ATTACK_WINDOWS = []
+    ATTACKER_IPS = set()
 
     curremt_start = None
+    current_name = "unknown_attack"
     with open("logs/logger.out", "r") as f:
         for line in f:
+            if "[Coordinator]" in line and "alias_set requested for" in line:
+                match = re.search(r'alias_set requested for ([\d.]+):', line)
+                if match:
+                    ATTACKER_IPS.add(match.group(1))
+                continue
+
+            if "[Coordinator]" in line and "attack_label:" in line:
+                match = re.search(r'attack_label:\s*(\S+)', line)
+                if match:
+                    current_name = match.group(1)
+                continue
+
             if "[Attack Client]" not in line:
                 continue
 
@@ -302,13 +326,14 @@ def set_attack_times(range_start:float | None = None, range_end:float | None = N
             if "INFO: running" in line:
                 curremt_start = timestamp
             elif "INFO: finished" in line and curremt_start is not None:
-                ATTACK_WINDOWS.append((curremt_start, timestamp))
+                ATTACK_WINDOWS.append((curremt_start, timestamp, current_name))
                 curremt_start = None
+                current_name = "unknown_attack"
     
     if range_start is not None and range_end is not None:
         ATTACK_WINDOWS = [
-            (start, stop)
-            for start, stop in ATTACK_WINDOWS
+            (start, stop, name)
+            for start, stop, name in ATTACK_WINDOWS
             if (start <= range_end) or (stop >= range_start)
         ]
 
