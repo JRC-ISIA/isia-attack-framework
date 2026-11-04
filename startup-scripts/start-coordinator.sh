@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-cd "$(dirname "$0")"
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
-source .venv/bin/activate
+if [[ ! -f ../coordinator.py ]]; then
+    printf 'ERROR: coordinator.py not found in ISIA-AF root directory\n' "$PWD" >&2
+    exit 1
+fi
+
+source ../.venv/bin/activate
 
 log_entry() {
     local module="$1"
@@ -57,7 +62,7 @@ cleanup() {
 trap cleanup EXIT
 
 if [ -f requirements.txt ]; then
-    pip install -r requirements.txt > /dev/null 2>&1
+    python3 -m pip install -r requirements.txt || exit 1
 fi
 
 for mod in "${MODULES[@]}"; do
@@ -66,4 +71,4 @@ done
 
 log_entry "Coordinator" "INFO" "coordinator.py starting with LCM_URI=${LCM_URI}" | tee -a logs/coordinator.out
 
-python3 coordinator.py
+python3 ../coordinator.py
