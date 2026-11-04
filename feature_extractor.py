@@ -96,6 +96,7 @@ ATTACK_WINDOWS = []
 ATTACK_START_TIME = None
 ATTACK_STOP_TIME = None
 
+
 #NEW: attacker IPs parsed dynamically from logger.out, populated by set_attack_times()
 ATTACKER_IPS = set()
 
@@ -298,6 +299,7 @@ def set_attack_times(range_start:float | None = None, range_end:float | None = N
     global ATTACK_WINDOWS
     global ATTACKER_IPS
     ATTACK_WINDOWS = []
+    ATTACKER_IPS = set()
 
     # NEW: collect attacker IPs dynamically from coordinator alias log entries
     ATTACKER_IPS = set()
@@ -312,7 +314,6 @@ def set_attack_times(range_start:float | None = None, range_end:float | None = N
                 if match:
                     ATTACKER_IPS.add(match.group(1))
                 continue
-
             if "[Attack Client]" not in line:
                 continue
 

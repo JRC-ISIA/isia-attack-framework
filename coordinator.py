@@ -211,6 +211,8 @@ def exeqt_attack_def(task,targets:list=None,params:dict=None):
     
     if task in function_map:
         if task == "start_attack":
+            attack_label = ATTACK_DEF.get("label", "unknown_attack")
+            report_event("Coordinator", "INFO", f"attack_label: {attack_label}", lc)
             function_map[task](targets, params["interpreter"], params["script"])
         elif task == "start_attack_script":
             function_map[task](targets, params["interpreter"], params["script"])
