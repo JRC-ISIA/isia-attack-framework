@@ -15,7 +15,6 @@ from datetime import datetime, timezone
 @dataclass
 class net_features:
     # basic features
-    # CHANGED: under_attack: bool -> label: str
     label: str
     ts:float
     src_ip:str
@@ -96,18 +95,8 @@ ATTACK_WINDOWS = []
 ATTACK_START_TIME = None
 ATTACK_STOP_TIME = None
 
-
-#NEW: attacker IPs parsed dynamically from logger.out, populated by set_attack_times()
 ATTACKER_IPS = set()
 
-def extract_attack_name(line: str) -> str:
-    match = re.search(r'(?:attack|dos|recon|mitm)-([a-zA-Z0-9_-]+)\.(?:sh|py)', line)
-    if match:
-        return match.group(1).replace("-", "_")
-    return "unknown_attack"
-
-# CHANGED: now returns str label instead of bool, and takes src_ip to distinguish
-# attack traffic from system reaction traffic
 def label_dataset(first_ts: float, last_ts: float, src_ip: str) -> str:
     """labels dataset based on logs 'attack start' and 'attack stop' entries and adds label column to dataset"""
     if not ATTACK_WINDOWS:
@@ -169,7 +158,6 @@ def extract_features(pcap:str):
         first_ts = float(packets[0].time)
         last_ts = float(packets[-1].time)
         duration = last_ts - first_ts
-        # CHANGED: pass src_ip to label_dataset, store result as label
         label = label_dataset(first_ts, last_ts, flow_key[0])
         features = net_features(
             label = label,
@@ -301,19 +289,22 @@ def set_attack_times(range_start:float | None = None, range_end:float | None = N
     ATTACK_WINDOWS = []
     ATTACKER_IPS = set()
 
-    # NEW: collect attacker IPs dynamically from coordinator alias log entries
-    ATTACKER_IPS = set()
-
     curremt_start = None
     current_name = "unkown_attack"
     with open("logs/logger.out", "r") as f:
         for line in f:
-            # NEW: parse attacker IPs from coordinator alias assignments
             if "[Coordinator]" in line and "alias_set requested for" in line:
                 match = re.search(r'alias_set requested for ([\d.]+):', line)
                 if match:
                     ATTACKER_IPS.add(match.group(1))
                 continue
+            
+            if "[Coordinator]" in line and "attack_label:" in line:
+                match = re.search(r'attack_label:\s*(\S+)', line)
+                if match:
+                    current_name = match.group(1)
+                continue
+
             if "[Attack Client]" not in line:
                 continue
 
@@ -324,11 +315,8 @@ def set_attack_times(range_start:float | None = None, range_end:float | None = N
             except Exception as e:
                 print(f"Error parsing date from log line: {line}. Error: {e}")
                 continue
-            # CHANGED: also extract attack name when attack starts
             if "INFO: running" in line:
                 curremt_start = timestamp
-                current_name = extract_attack_name(line)
-            # CHANGED: store (start, stop, name) instead of (start, stop)
             elif "INFO: finished" in line and curremt_start is not None:
                 ATTACK_WINDOWS.append((curremt_start, timestamp, current_name))
                 curremt_start = None
