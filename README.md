@@ -109,6 +109,20 @@ The framework is functional in its basic workflow:
 
 Some parts are still being refined, especially around robustness, error handling and completeness of the extracted feature set.
 
-## Main Author
+## Acknowledgements
 
-Stefan Haratzmüller, JRC Intelligent and Secure Industrial Automation
+To acknowledge us in your publication(s) please refer to the following publication:
+
+```
+@inproceedings{isiaaf-2026,
+  title         = {{ISIA-AF}: Orchestrating Reproducible Attacks and Multi-Source Data Collection for {OT} Systems},
+  author        = {Haratzm\"{u}ller, Stefan Manfred and Rosenstatter, Thomas and Sa\ss{}nick, Olaf and Sain, Dalibor and Huber, Stefan},
+  year          = 2026,
+  month         = 09,
+  booktitle     = {52nd Euromicro Conference on Software Engineering and Advanced Applications (SEAA) 2026},
+  doi           = {10.1007/978-3-032-36590-3_2}
+}
+```
+
+
+
