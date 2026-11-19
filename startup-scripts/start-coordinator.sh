@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 
-cd "$(dirname "${BASH_SOURCE[0]}")"
+set -euo pipefail
 
-if [[ ! -f ../coordinator.py ]]; then
-    printf 'ERROR: coordinator.py not found in ISIA-AF root directory\n' "$PWD" >&2
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+if [[ ! -f coordinator.py ]]; then
+    printf 'ERROR: coordinator.py not found in directory %s\n' "$PWD" >&2
     exit 1
 fi
 
-source ../.venv/bin/activate
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+fi
+
+source .venv/bin/activate
 
 log_entry() {
     local module="$1"
@@ -21,7 +27,7 @@ log_entry() {
 }
 
 export LCM_URI="${LCM_URI:-udpm://239.255.76.67:7667?ttl=16}"
-export DEVICE_ID="${DEVICE_ID:-coord-pi01}"
+export DEVICE_ID="${DEVICE_ID:-coord-pi02}"
 
 mkdir -p run logs
 
@@ -32,7 +38,7 @@ stop_module() {
     local pid_file="run/${name}.pid"
     if [[ -f "$pid_file" ]]; then
         local old_pid
-        old_pid=$(cat "$pid_file")
+        old_pid=$(cat "$pid_file" 2>/dev/null || true)
         if [[ -n "${old_pid}" ]] && kill -0 "${old_pid}" 2>/dev/null; then
             kill "${old_pid}" 2>/dev/null || true
         fi
@@ -46,7 +52,7 @@ start_module() {
     local pid_file="run/${name}.pid"
     local log_file="logs/${name}.out"
 
-    stop_module "$name" # Clean up existing instance if any
+    stop_module "$name"
 
     nohup env PYTHONUNBUFFERED=1 python3 -u "$script" >> "$log_file" 2>&1 &
     echo $! > "$pid_file"
@@ -62,7 +68,8 @@ cleanup() {
 trap cleanup EXIT
 
 if [ -f requirements.txt ]; then
-    python3 -m pip install -r requirements.txt || exit 1
+    echo "[INFO] Installing requirements..."
+    python3 -m pip install -r requirements.txt || true
 fi
 
 for mod in "${MODULES[@]}"; do
@@ -71,4 +78,4 @@ done
 
 log_entry "Coordinator" "INFO" "coordinator.py starting with LCM_URI=${LCM_URI}" | tee -a logs/coordinator.out
 
-python3 ../coordinator.py
+python3 coordinator.py "$@"
