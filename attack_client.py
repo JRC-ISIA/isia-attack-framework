@@ -1,6 +1,6 @@
 """Attack Client"""
 
-import time, json, lcm, tempfile, threading, subprocess, os, time, socket, base64, netifaces
+import time, json, lcm, tempfile, threading, subprocess, os, socket, base64, netifaces
 from exlcm.attack_cmd_t import attack_cmd_t
 from exlcm.task_status_t import task_status_t
 from exlcm.alias_cmd_t import alias_cmd_t
@@ -10,7 +10,7 @@ lc = get_lc()
 
 CLIENT_ID = socket.gethostname()
 CLIENT_IPS = []
-CLIENT_ALIAS = "attack_agent0"
+CLIENT_ALIAS = socket.gethostname()
 
 # request_ntp()
 
@@ -62,10 +62,10 @@ def run_script(path: str, args: list, script_id: str | None):
             _current_proc = p
             _current_proc_meta = {"script_id":script_id, "path":path, "start_ts":int(time.time()*1000)}
         stdout, stderr = p.communicate()
-        print('SCRIPT SDTOUT:')
+        print('SCRIPT STDOUT:')
         print(stdout)
         if stderr:
-            print('SCRIPT SDTERR:')
+            print('SCRIPT STDERR:')
             print(stderr)
         rc = p.returncode
         info = f"rc={rc}"
@@ -115,7 +115,7 @@ def launch_attack_local(msg:attack_cmd_t):
         cleanup = False
 
         if not run_path or not os.path.isfile(run_path):
-            publish_status(task_type="start_attack", state="error", info=f"Locale script not found: {run_path}", script_id=script_id)
+            publish_status(task_type="start_attack", state="error", info=f"Local script not found: {run_path}", script_id=script_id)
             return
         
     publish_status(task_type="start_attack", state="running", info=f"Inline script starting on {run_path}", script_id=script_id)
@@ -178,11 +178,17 @@ def on_cmd(channel,data):
     
     try:
         msg = attack_cmd_t.decode(data)
+        if not hasattr(msg, "command") or msg.command == "":
+            return
+        
+        if msg.command == "lcm_ping":
+            print(f"msg receives: {msg.command}")
+            report_event("Attack Client", "INFO", f"lcm_ping received on {CLIENT_ALIAS or CLIENT_ID}", lc, dest_channel="COORDINATOR_LOG")
+            return
+
         payload = json.loads(msg.payload_json)
         targets = payload.get("targets", [])
         if CLIENT_ALIAS not in targets:
-            return
-        if not hasattr(msg, "command") or msg.command == "":
             return
         
     except Exception as e:
@@ -190,9 +196,6 @@ def on_cmd(channel,data):
     
     print(f"msg receives: {msg.command}")
     
-    if msg.command == "lcm_ping":
-        report_event("Attack Client", "INFO", f"lcm_ping received: {channel}", lc, dest_channel="COORDINATOR_LOG")
-        return
     
     # try:
     #     payload = json.loads(msg.payload_json) if msg.payload_json else {}
