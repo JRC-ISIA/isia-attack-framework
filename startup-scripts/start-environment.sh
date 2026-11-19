@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# Use BASH_SOURCE so it doesn't crash if sourced
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-source ../.venv/bin/activate
+source .venv/bin/activate
 
 log_entry() {
     local module="$1"
