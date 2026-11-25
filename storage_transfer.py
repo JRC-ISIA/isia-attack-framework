@@ -2,9 +2,9 @@ from pathlib import Path
 from helper_functions import report_event, request_ntp , get_lc, transfer_file,publish_task_status
 from exlcm.store_cmd_t import store_cmd_t
 
-HOSTNAME = "192.168.50.2"
-USERNAME = "ssh_access"
-PASSWORD = "isiapersistence"
+HOSTNAME = "nas_ip"
+USERNAME = "nas_user"
+PASSWORD = "nas_password"
 
 LOCAL_PATH = "dataset/"
 REMOTE_PATH = "/volume1/IE_Persistence/IT_Sec/attack-framework/"
