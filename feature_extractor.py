@@ -198,8 +198,8 @@ def extract_features(pcap:str):
 
 def request_information_engine_data(start_dt: datetime, stop_dt: datetime):
     """gathers addidtional information about testbed state from information engine"""
-    url = "http://172.17.20.21:8086"
-    token = "R8mt05L4YQDjEwyijC0fzU9lR29Yx94hWC4Tc8lLQ2icaZ3T0E9-0UGd1o5Wevnu58l3RtTkaCmPwLlRcpePBw=="
+    url = "influxdb_IP"
+    token = "password
     org = "fh"
     bucket = "OPCUA_DATA"
     
